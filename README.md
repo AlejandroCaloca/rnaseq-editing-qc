@@ -150,7 +150,7 @@ nextflow -version
 ### Clone Repository
 
 ```bash
-git clone https://github.com/your-org/rnaseq-editing-qc.git
+git clone https://github.com/AlejandroCaloca/rnaseq-editing-qc.git
 cd rnaseq-editing-qc
 ```
 
@@ -432,4 +432,4 @@ If you use this pipeline, please cite:
 
 ---
 
-*Developed by the Bioinformatics Research Lab*
+*Developed by The Bioinformatics Research Lab*

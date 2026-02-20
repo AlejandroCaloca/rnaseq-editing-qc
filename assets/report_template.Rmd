@@ -1,0 +1,454 @@
+---
+title: "`r params$title`"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    toc_depth: 3
+    number_sections: true
+    df_print: paged
+    self_contained: true
+    code_folding: hide
+params:
+  title: "IGF2BP3 Knockout RNA-seq Analysis Report"
+  results_all: "deseq2_results_all.csv"
+  results_sig: "deseq2_results_sig.csv"
+  ko_stats: "ko_efficiency_stats.csv"
+  ko_condition: "I3KO"
+  control_condition: "NT"
+  ko_gene: "IGF2BP3"
+  lfc_threshold: 1.0
+  pval_threshold: 0.05
+  samplesheet: "samplesheet.csv"
+---
+
+```{css, echo=FALSE}
+/* ── Custom styling ─────────────────────────────────────────── */
+body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; }
+
+.stat-box {
+  display: inline-block;
+  background: #f8f9fa;
+  border-left: 4px solid #3498db;
+  border-radius: 4px;
+  padding: 12px 20px;
+  margin: 6px;
+  min-width: 140px;
+  text-align: center;
+}
+.stat-box.green  { border-left-color: #27ae60; }
+.stat-box.red    { border-left-color: #e74c3c; }
+.stat-box.orange { border-left-color: #f39c12; }
+
+.stat-number { font-size: 2em; font-weight: bold; color: #2c3e50; }
+.stat-label  { font-size: 0.85em; color: #7f8c8d; margin-top: 2px; }
+
+.qc-pass { color: #27ae60; font-weight: bold; }
+.qc-fail { color: #e74c3c; font-weight: bold; }
+.qc-warn { color: #f39c12; font-weight: bold; }
+
+.section-intro { 
+  background: #eaf4fb; 
+  border-radius: 6px; 
+  padding: 10px 16px; 
+  margin-bottom: 16px;
+  font-size: 0.95em;
+  color: #2980b9;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo      = FALSE,
+  warning   = FALSE,
+  message   = FALSE,
+  fig.align = "center",
+  fig.width = 9,
+  fig.height = 6,
+  dpi       = 150
+)
+
+# Load libraries
+library(ggplot2)
+library(dplyr)
+library(DT)
+library(knitr)
+library(kableExtra)
+
+# ── Load data ──────────────────────────────────────────────────
+samplesheet  <- read.csv(params$samplesheet)
+results_all  <- read.csv(params$results_all)
+results_sig  <- read.csv(params$results_sig)
+ko_stats     <- read.csv(params$ko_stats)
+
+# Summary counts
+n_total    <- nrow(results_all)
+n_sig      <- nrow(results_sig)
+n_up       <- sum(results_sig$log2FoldChange > 0, na.rm = TRUE)
+n_down     <- sum(results_sig$log2FoldChange < 0, na.rm = TRUE)
+ko_eff     <- round(ko_stats$ko_efficiency[1] * 100, 1)
+ko_passed  <- isTRUE(ko_stats$passed_qc[1])
+```
+
+---
+
+# Experimental Design {.tabset}
+
+<div class="section-intro">
+This report summarises the RNA-seq analysis of **`r params$ko_gene` knockout** (`r params$ko_condition`) versus **non-targeting control** (`r params$control_condition`) in SEM human B-cell precursor leukaemia cells.
+</div>
+
+## Sample Overview
+
+```{r sample-table}
+samplesheet %>%
+  select(sample, condition, replicate) %>%
+  arrange(condition, replicate) %>%
+  kable(
+    col.names = c("Sample", "Condition", "Replicate"),
+    align     = c("l", "c", "c")
+  ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) %>%
+  row_spec(which(samplesheet$condition == params$ko_condition),
+           background = "#fdecea") %>%
+  row_spec(which(samplesheet$condition == params$control_condition),
+           background = "#eaf4fb")
+```
+
+## Design Summary
+
+```{r design-summary}
+n_ko  <- sum(samplesheet$condition == params$ko_condition)
+n_nt  <- sum(samplesheet$condition == params$control_condition)
+
+design_df <- data.frame(
+  Parameter = c("Cell line", "Knockout target", "Comparison",
+                "Replicates (KO)", "Replicates (Control)",
+                "Sequencing type", "Reference genome"),
+  Value = c("SEM (B-cell precursor leukaemia)", params$ko_gene,
+            paste0(params$ko_condition, " vs ", params$control_condition),
+            n_ko, n_nt, "Paired-end RNA-seq", "GRCh38 / hg38")
+)
+
+kable(design_df, col.names = c("Parameter", "Value")) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"),
+                full_width = FALSE)
+```
+
+---
+
+# Knockout Verification {.tabset}
+
+<div class="section-intro">
+`r params$ko_gene` expression was compared between knockout and control samples to confirm editing efficiency. A minimum of 90% reduction in expression is required to pass QC.
+</div>
+
+## QC Status
+
+```{r ko-status}
+status_class <- if (ko_passed) "qc-pass" else "qc-fail"
+status_text  <- if (ko_passed) "PASSED ✓" else "FAILED ✗"
+status_msg   <- if (ko_passed) {
+  paste0("Knockout efficiency of ", ko_eff, "% meets the 90% threshold.")
+} else {
+  paste0("WARNING: Knockout efficiency of ", ko_eff,
+         "% is below the 90% threshold. Review samples carefully.")
+}
+```
+
+<div class="stat-box `r if(ko_passed) 'green' else 'red'`">
+  <div class="stat-number">`r ko_eff`%</div>
+  <div class="stat-label">KO Efficiency</div>
+</div>
+<div class="stat-box `r if(ko_passed) 'green' else 'red'`">
+  <div class="stat-number"><span class="`r status_class`">`r status_text`</span></div>
+  <div class="stat-label">QC Result</div>
+</div>
+
+<br>
+<p>`r status_msg`</p>
+
+```{r ko-stats-table}
+ko_stats %>%
+  mutate(
+    ko_efficiency  = paste0(round(ko_efficiency * 100, 1), "%"),
+    threshold      = paste0(round(threshold * 100, 0), "%"),
+    passed_qc      = ifelse(passed_qc, "PASSED ✓", "FAILED ✗"),
+    ko_mean_count  = round(ko_mean_count, 1),
+    control_mean_count = round(control_mean_count, 1)
+  ) %>%
+  kable(
+    col.names = c("Gene", "KO Mean Count", "Control Mean Count",
+                  "KO Efficiency", "Threshold", "QC Status")
+  ) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
+```
+
+## Expression Plot
+
+```{r ko-plot, fig.height=5, fig.width=7}
+if (file.exists("ko_efficiency_plot.png")) {
+  knitr::include_graphics("ko_efficiency_plot.png")
+} else {
+  cat("KO efficiency plot not found.")
+}
+```
+
+---
+
+# QC Metrics {.tabset}
+
+<div class="section-intro">
+Summary of key quality control metrics across all samples.
+</div>
+
+## Summary Statistics
+
+```{r qc-summary-boxes}
+n_samples <- nrow(samplesheet)
+```
+
+<div class="stat-box">
+  <div class="stat-number">`r n_samples`</div>
+  <div class="stat-label">Total Samples</div>
+</div>
+<div class="stat-box green">
+  <div class="stat-number">`r n_ko`</div>
+  <div class="stat-label">KO (`r params$ko_condition`)</div>
+</div>
+<div class="stat-box">
+  <div class="stat-number">`r n_nt`</div>
+  <div class="stat-label">Control (`r params$control_condition`)</div>
+</div>
+<div class="stat-box `r if(ko_passed) 'green' else 'red'`">
+  <div class="stat-number">`r ko_eff`%</div>
+  <div class="stat-label">KO Efficiency</div>
+</div>
+
+## PCA Plot
+
+```{r pca-plot}
+pca_png <- "plots/pca_plot.png"
+if (file.exists(pca_png)) {
+  knitr::include_graphics(pca_png)
+} else {
+  cat("PCA plot not available — run DESeq2 module first.")
+}
+```
+
+<p style="font-size:0.9em; color:#666;">
+Principal component analysis of variance-stabilised counts. Samples should cluster by condition (KO vs Control). Outliers or unexpected clustering may indicate sample quality issues.
+</p>
+
+---
+
+# Differential Expression {.tabset}
+
+<div class="section-intro">
+Differential expression analysis was performed using **DESeq2** comparing `r params$ko_condition` vs `r params$control_condition`. Significance thresholds: adjusted p-value < `r params$pval_threshold`, |log2FC| > `r params$lfc_threshold`.
+</div>
+
+## Summary
+
+<div class="stat-box">
+  <div class="stat-number">`r format(n_total, big.mark=",")`</div>
+  <div class="stat-label">Genes Tested</div>
+</div>
+<div class="stat-box orange">
+  <div class="stat-number">`r format(n_sig, big.mark=",")`</div>
+  <div class="stat-label">Significant DEGs</div>
+</div>
+<div class="stat-box red">
+  <div class="stat-number">`r n_up`</div>
+  <div class="stat-label">Upregulated</div>
+</div>
+<div class="stat-box green">
+  <div class="stat-number">`r n_down`</div>
+  <div class="stat-label">Downregulated</div>
+</div>
+
+## Volcano Plot
+
+```{r volcano}
+volcano_png <- "plots/volcano_plot.png"
+if (file.exists(volcano_png)) {
+  knitr::include_graphics(volcano_png)
+} else {
+  cat("Volcano plot not available.")
+}
+```
+
+## MA Plot
+
+```{r ma-plot}
+ma_png <- "plots/ma_plot.png"
+if (file.exists(ma_png)) {
+  knitr::include_graphics(ma_png)
+} else {
+  cat("MA plot not available.")
+}
+```
+
+## Heatmap
+
+```{r heatmap}
+heatmap_png <- "plots/heatmap_top_genes.png"
+if (file.exists(heatmap_png)) {
+  knitr::include_graphics(heatmap_png)
+} else {
+  cat("Heatmap not available.")
+}
+```
+
+## Top Upregulated Genes
+
+```{r top-up}
+results_sig %>%
+  filter(log2FoldChange > 0) %>%
+  arrange(padj) %>%
+  head(20) %>%
+  mutate(
+    log2FoldChange = round(log2FoldChange, 3),
+    baseMean       = round(baseMean, 1),
+    padj           = formatC(padj, format = "e", digits = 2),
+    pvalue         = formatC(pvalue, format = "e", digits = 2)
+  ) %>%
+  select(gene_id, baseMean, log2FoldChange, pvalue, padj) %>%
+  kable(
+    col.names = c("Gene", "Mean Expression", "log2FC", "p-value", "Adj. p-value"),
+    align = c("l", "r", "r", "r", "r")
+  ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) %>%
+  column_spec(3, color = ifelse(
+    head(results_sig %>% filter(log2FoldChange > 0) %>% arrange(padj), 20)$log2FoldChange > 0,
+    "#e74c3c", "#3498db"
+  ))
+```
+
+## Top Downregulated Genes
+
+```{r top-down}
+results_sig %>%
+  filter(log2FoldChange < 0) %>%
+  arrange(padj) %>%
+  head(20) %>%
+  mutate(
+    log2FoldChange = round(log2FoldChange, 3),
+    baseMean       = round(baseMean, 1),
+    padj           = formatC(padj, format = "e", digits = 2),
+    pvalue         = formatC(pvalue, format = "e", digits = 2)
+  ) %>%
+  select(gene_id, baseMean, log2FoldChange, pvalue, padj) %>%
+  kable(
+    col.names = c("Gene", "Mean Expression", "log2FC", "p-value", "Adj. p-value"),
+    align = c("l", "r", "r", "r", "r")
+  ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE) %>%
+  column_spec(3, color = "#3498db")
+```
+
+## Full Results Table
+
+Interactive searchable table of all significant DEGs. Use the search box to find specific genes.
+
+```{r full-de-table}
+results_sig %>%
+  mutate(
+    log2FoldChange = round(log2FoldChange, 3),
+    baseMean       = round(baseMean, 1),
+    padj           = formatC(padj, format = "e", digits = 2),
+    pvalue         = formatC(pvalue, format = "e", digits = 2),
+    Direction      = ifelse(log2FoldChange > 0, "▲ Up", "▼ Down")
+  ) %>%
+  select(gene_id, Direction, baseMean, log2FoldChange, pvalue, padj) %>%
+  datatable(
+    colnames    = c("Gene", "Direction", "Mean Expression", "log2FC", "p-value", "Adj. p-value"),
+    rownames    = FALSE,
+    filter      = "top",
+    extensions  = c("Buttons", "Scroller"),
+    options     = list(
+      dom        = "Bfrtip",
+      buttons    = list(
+        list(extend = "csv",   text = "Download CSV"),
+        list(extend = "excel", text = "Download Excel")
+      ),
+      scrollY    = 400,
+      scroller   = TRUE,
+      pageLength = 25,
+      columnDefs = list(
+        list(className = "dt-center", targets = 1)
+      )
+    )
+  ) %>%
+  formatStyle(
+    "Direction",
+    color = styleEqual(c("▲ Up", "▼ Down"), c("#e74c3c", "#3498db")),
+    fontWeight = "bold"
+  )
+```
+
+---
+
+# Methods {.tabset}
+
+## Analysis Methods
+
+This analysis was performed using the **rnaseq-editing-qc** pipeline.
+
+**Alignment & Quantification:** Pre-aligned BAM files were quantified using HTSeq-count (union mode, reverse stranded) against the GRCh38 genome annotation (Ensembl). BAM quality metrics were assessed using samtools flagstat/stats and RSeQC.
+
+**Differential Expression:** Differential expression analysis was performed using DESeq2 (Love *et al.*, 2014). Genes with fewer than 10 counts in fewer than 3 samples were excluded from analysis. The Wald test was used with the contrast `r params$ko_condition` vs `r params$control_condition`. Significant genes were defined as adjusted p-value < `r params$pval_threshold` and |log2FC| > `r params$lfc_threshold`.
+
+**Knockout Verification:** `r params$ko_gene` expression was compared between conditions using raw count values. Knockout efficiency was calculated as 1 − (mean KO count / mean control count). A minimum efficiency of 90% was required to pass QC.
+
+**Visualisation:** All plots were generated using ggplot2 and pheatmap in R. The heatmap displays variance-stabilised counts (VST) for the top differentially expressed genes, scaled per gene (mean-centred).
+
+## Software Versions
+
+```{r versions}
+# Attempt to read versions file from pipeline output
+versions_file <- "software_versions.yml"
+if (file.exists(versions_file)) {
+  versions_raw <- yaml::read_yaml(versions_file)
+  versions_df  <- data.frame(
+    Software = names(unlist(versions_raw)),
+    Version  = unlist(versions_raw)
+  )
+  kable(versions_df) %>%
+    kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
+} else {
+  # Fallback: show R package versions
+  pkgs <- c("DESeq2", "ggplot2", "pheatmap", "ggrepel", "DT", "knitr", "rmarkdown")
+  data.frame(
+    Software = c("R", pkgs),
+    Version  = c(paste(R.version$major, R.version$minor, sep="."),
+                 sapply(pkgs, function(p) as.character(packageVersion(p))))
+  ) %>%
+    kable() %>%
+    kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
+}
+```
+
+## References
+
+- **DESeq2:** Love MI, Huber W, Anders S. Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2. *Genome Biology* 15:550 (2014).
+- **HTSeq:** Putri GH *et al*. Analysing high-throughput sequencing data in Python with HTSeq 2.0. *Bioinformatics* 38:2943–2945 (2022).
+- **samtools:** Danecek P *et al*. Twelve years of SAMtools and BCFtools. *GigaScience* 10:giab008 (2021).
+- **RSeQC:** Wang L, Wang S, Li W. RSeQC: quality control of RNA-seq experiments. *Bioinformatics* 28:2184–2185 (2012).
+- **ggplot2:** Wickham H. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York (2016).
+- **Nextflow:** Di Tommaso P *et al*. Nextflow enables reproducible computational workflows. *Nature Biotechnology* 35:316–319 (2017).
+- **nf-core:** Ewels PA *et al*. The nf-core framework for community-curated bioinformatics pipelines. *Nature Biotechnology* 38:276–278 (2020).
+
+---
+
+<div style="text-align:center; color:#aaa; font-size:0.85em; margin-top:40px;">
+  Report generated by rnaseq-editing-qc pipeline · `r format(Sys.time(), '%Y-%m-%d %H:%M')`
+</div>
