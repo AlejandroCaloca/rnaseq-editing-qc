@@ -39,39 +39,57 @@ This pipeline is a custom fork of [nf-core/rnaseq](https://github.com/nf-core/rn
 
 ## Pipeline Summary
 
+The pipeline supports **four entry points** so you can start from whichever data you already have:
+
 ```
-Raw FASTQs
+╔══════════════════════════════════════════════════════════════════════════╗
+║              ENTRY POINTS — start from any stage                        ║
+╠══════════════╦═══════════════╦══════════════════╦════════════════════════╣
+║  --entry_point fastq         ║  --entry_point bam                        ║
+║  (raw FASTQs)                ║  (pre-aligned BAMs)  ← CURRENT USE CASE  ║
+╚══════════════╩═══════════════╩══════════════════╩════════════════════════╝
+
+ [fastq] Raw FASTQs
     │
     ▼
-FastQC (raw QC)
+ FastQC (raw QC)              ← skipped for BAM/counts/deseq2 entry points
     │
     ▼
-Trimmomatic (adapter & quality trimming)
+ Trimmomatic (trimming)       ← skipped for BAM/counts/deseq2
     │
     ▼
-FastQC (post-trim QC)
+ STAR / HISAT2 (alignment)    ← skipped for BAM/counts/deseq2
+    │
+ [bam] Pre-aligned BAMs ──────┘
     │
     ▼
-STAR or HISAT2 (alignment to GRCh38)
+ samtools flagstat/stats       ← BAM QC (BAM entry point only)
+ RSeQC infer_experiment        ← confirms strandedness
     │
     ▼
-HTSeq-count / Salmon (quantification)
+ HTSeq-count / Salmon          ← quantification
     │
-    ├──► Knockout Verification (IGF2BP3 expression check)
+ [counts] Count files ─────────┘
     │
     ▼
-DESeq2 (differential expression: I3KO vs NT)
+ KO Verification (IGF2BP3 expression check + QC flag)
+    │
+    ▼
+ DESeq2 (I3KO vs NT)
+    │
+ [deseq2] Saved RDS ───────────┘  (re-run plots/report with new thresholds)
     │
     ├──► Volcano plot
     ├──► MA plot
     ├──► PCA plot
-    ├──► Heatmap (top DE genes)
+    ├──► Heatmap (top 50 DE genes)
+    ├──► Barplots (genes of interest)
     │
     ▼
-MultiQC (aggregate QC report)
+ MultiQC (aggregate report)
     │
     ▼
-HTML Report (RMarkdown, main deliverable)
+ HTML Report ← main deliverable
 ```
 
 ---
@@ -86,14 +104,23 @@ curl -s https://get.nextflow.io | bash
 git clone https://github.com/your-org/rnaseq-editing-qc.git
 cd rnaseq-editing-qc
 
-# 3. Run with Docker (recommended)
+# ── Starting from BAM files (most common) ────────────────────────────────────
 nextflow run main.nf \
     -profile docker \
-    --input samplesheet.csv \
+    --entry_point bam \
+    --input assets/samplesheet_bam_template.csv \
     --genome GRCh38 \
     --outdir ./results
 
-# 4. Run test to validate installation
+# ── Starting from raw FASTQs (full pipeline) ─────────────────────────────────
+nextflow run main.nf \
+    -profile docker \
+    --entry_point fastq \
+    --input assets/samplesheet_template.csv \
+    --genome GRCh38 \
+    --outdir ./results
+
+# ── Run test to validate installation ────────────────────────────────────────
 nextflow run main.nf -profile docker,test
 ```
 
@@ -173,13 +200,9 @@ nextflow run main.nf -profile docker --input samplesheet.csv --genome GRCh38 -re
 
 ## Samplesheet Format
 
-Create a CSV file with the following columns:
+The samplesheet format depends on your `--entry_point`. Templates for all formats are in `assets/`.
 
-```
-sample,fastq_1,fastq_2,condition,replicate
-```
-
-**Example** (`samplesheet.csv`):
+### FASTQ samplesheet (`--entry_point fastq`)
 
 ```csv
 sample,fastq_1,fastq_2,condition,replicate
@@ -190,19 +213,63 @@ SEM_NT_DMSO_rep1,/data/NT_rep1_R1.fastq.gz,/data/NT_rep1_R2.fastq.gz,NT,1
 SEM_NT_DMSO_rep2,/data/NT_rep2_R1.fastq.gz,/data/NT_rep2_R2.fastq.gz,NT,2
 SEM_NT_DMSO_rep3,/data/NT_rep3_R1.fastq.gz,/data/NT_rep3_R2.fastq.gz,NT,3
 ```
+Template: `assets/samplesheet_template.csv`
 
-A template is available at `assets/samplesheet_template.csv`.
+### BAM samplesheet (`--entry_point bam`) ← Current use case
 
-**Column descriptions:**
-- `sample`: Unique sample name (no spaces)
-- `fastq_1`: Path to R1 FASTQ file (gzipped)
-- `fastq_2`: Path to R2 FASTQ file (gzipped)
-- `condition`: Condition label — must match `--ko_condition` or `--control_condition`
-- `replicate`: Integer replicate number
+```csv
+sample,bam,bai,condition,replicate
+SEM_I3KO_DMSO_rep1,/data/I3KO_rep1.bam,/data/I3KO_rep1.bam.bai,I3KO,1
+SEM_I3KO_DMSO_rep2,/data/I3KO_rep2.bam,/data/I3KO_rep2.bam.bai,I3KO,2
+SEM_I3KO_DMSO_rep3,/data/I3KO_rep3.bam,/data/I3KO_rep3.bam.bai,I3KO,3
+SEM_NT_DMSO_rep1,/data/NT_rep1.bam,/data/NT_rep1.bam.bai,NT,1
+SEM_NT_DMSO_rep2,/data/NT_rep2.bam,/data/NT_rep2.bam.bai,NT,2
+SEM_NT_DMSO_rep3,/data/NT_rep3.bam,/data/NT_rep3.bam.bai,NT,3
+```
+Template: `assets/samplesheet_bam_template.csv`
+
+> **Note on BAI index files:** The `bai` column is optional. If omitted, the pipeline will look for `<file>.bam.bai` or `<file>.bai` next to the BAM. If no index is found, index your BAMs first:
+> ```bash
+> samtools index /path/to/sample.bam
+> ```
+
+### Counts samplesheet (`--entry_point counts`)
+
+```csv
+sample,counts_file,condition,replicate
+SEM_I3KO_DMSO_rep1,/data/I3KO_rep1.counts.txt,I3KO,1
+SEM_NT_DMSO_rep1,/data/NT_rep1.counts.txt,NT,1
+```
+Template: `assets/samplesheet_counts_template.csv`
+
+### DESeq2 RDS (`--entry_point deseq2`)
+
+No samplesheet needed for the RDS — provide `--deseq2_rds` directly:
+```bash
+nextflow run main.nf -profile docker \
+    --entry_point deseq2 \
+    --deseq2_rds ./results/deseq2/deseq2_object.rds \
+    --input samplesheet.csv \  # used only for sample metadata in report
+    --outdir ./results_replot
+```
+
+**Common columns (all formats):**
+
+| Column | Description |
+|--------|-------------|
+| `sample` | Unique sample name (no spaces or special characters) |
+| `condition` | Must match `--ko_condition` or `--control_condition` exactly |
+| `replicate` | Integer replicate number (1, 2, 3…) |
 
 ---
 
 ## Parameters
+
+### Entry Point
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--entry_point` | `fastq` | Where to start: `fastq` \| `bam` \| `counts` \| `deseq2` |
 
 ### Core Parameters
 

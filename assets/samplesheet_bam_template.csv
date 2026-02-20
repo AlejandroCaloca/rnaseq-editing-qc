@@ -1,0 +1,7 @@
+sample,bam,bai,condition,replicate
+SEM_I3KO_DMSO_rep1,/path/to/I3KO_rep1.bam,/path/to/I3KO_rep1.bam.bai,I3KO,1
+SEM_I3KO_DMSO_rep2,/path/to/I3KO_rep2.bam,/path/to/I3KO_rep2.bam.bai,I3KO,2
+SEM_I3KO_DMSO_rep3,/path/to/I3KO_rep3.bam,/path/to/I3KO_rep3.bam.bai,I3KO,3
+SEM_NT_DMSO_rep1,/path/to/NT_rep1.bam,/path/to/NT_rep1.bam.bai,NT,1
+SEM_NT_DMSO_rep2,/path/to/NT_rep2.bam,/path/to/NT_rep2.bam.bai,NT,2
+SEM_NT_DMSO_rep3,/path/to/NT_rep3.bam,/path/to/NT_rep3.bam.bai,NT,3
