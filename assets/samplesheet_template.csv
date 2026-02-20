@@ -1,0 +1,7 @@
+sample,fastq_1,fastq_2,condition,replicate
+SEM_I3KO_DMSO_rep1,/path/to/I3KO_rep1_R1.fastq.gz,/path/to/I3KO_rep1_R2.fastq.gz,I3KO,1
+SEM_I3KO_DMSO_rep2,/path/to/I3KO_rep2_R1.fastq.gz,/path/to/I3KO_rep2_R2.fastq.gz,I3KO,2
+SEM_I3KO_DMSO_rep3,/path/to/I3KO_rep3_R1.fastq.gz,/path/to/I3KO_rep3_R2.fastq.gz,I3KO,3
+SEM_NT_DMSO_rep1,/path/to/NT_rep1_R1.fastq.gz,/path/to/NT_rep1_R2.fastq.gz,NT,1
+SEM_NT_DMSO_rep2,/path/to/NT_rep2_R1.fastq.gz,/path/to/NT_rep2_R2.fastq.gz,NT,2
+SEM_NT_DMSO_rep3,/path/to/NT_rep3_R1.fastq.gz,/path/to/NT_rep3_R2.fastq.gz,NT,3

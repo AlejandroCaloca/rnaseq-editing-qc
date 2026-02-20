@@ -1,0 +1,41 @@
+# Nextflow work directory
+work/
+
+# Results
+results/
+test_results/
+
+# Nextflow hidden dirs
+.nextflow/
+.nextflow.log*
+
+# Large FASTQ/BAM/index files (don't commit)
+*.fastq.gz
+*.fq.gz
+*.bam
+*.bai
+*.fa
+*.fasta
+*.gtf
+test_data/reads/
+test_data/genome/
+
+# R session
+.Rhistory
+.RData
+.Rproj.user
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+slurm-*.out
+
+# Editor
+.vscode/
+*.swp

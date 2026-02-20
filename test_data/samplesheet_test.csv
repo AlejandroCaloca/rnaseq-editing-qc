@@ -1,0 +1,7 @@
+sample,fastq_1,fastq_2,condition,replicate
+SEM_I3KO_rep1,test_data/reads/I3KO_rep1_R1.fastq.gz,test_data/reads/I3KO_rep1_R2.fastq.gz,I3KO,1
+SEM_I3KO_rep2,test_data/reads/I3KO_rep2_R1.fastq.gz,test_data/reads/I3KO_rep2_R2.fastq.gz,I3KO,2
+SEM_I3KO_rep3,test_data/reads/I3KO_rep3_R1.fastq.gz,test_data/reads/I3KO_rep3_R2.fastq.gz,I3KO,3
+SEM_NT_rep1,test_data/reads/NT_rep1_R1.fastq.gz,test_data/reads/NT_rep1_R2.fastq.gz,NT,1
+SEM_NT_rep2,test_data/reads/NT_rep2_R1.fastq.gz,test_data/reads/NT_rep2_R2.fastq.gz,NT,2
+SEM_NT_rep3,test_data/reads/NT_rep3_R1.fastq.gz,test_data/reads/NT_rep3_R2.fastq.gz,NT,3
