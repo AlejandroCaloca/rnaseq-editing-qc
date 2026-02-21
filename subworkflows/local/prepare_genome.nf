@@ -1,63 +1,67 @@
 /*
 ========================================================================================
     SUBWORKFLOW: PREPARE_GENOME
-    Prepares genome indices for alignment and quantification
+    Prepares genome indices for alignment and quantification.
+    For BAM entry point, only GTF is required — all index building is skipped.
 ========================================================================================
 */
 
 nextflow.enable.dsl = 2
 
-include { STAR_GENOMEGENERATE   } from '../../modules/nf-core/star/genomegenerate/main'
+include { STAR_GENOMEGENERATE       } from '../../modules/nf-core/star/genomegenerate/main'
 include { HISAT2_EXTRACTSPLICESITES } from '../../modules/nf-core/hisat2/extractsplicesites/main'
-include { HISAT2_BUILD          } from '../../modules/nf-core/hisat2/build/main'
-include { SALMON_INDEX          } from '../../modules/nf-core/salmon/index/main'
+include { HISAT2_BUILD              } from '../../modules/nf-core/hisat2/build/main'
+include { SALMON_INDEX              } from '../../modules/nf-core/salmon/index/main'
 
 workflow PREPARE_GENOME {
 
     main:
+
+    // Always initialise versions as empty — mix in only what actually runs
     ch_versions = Channel.empty()
 
-    // Set genome files from params or iGenomes
-    ch_fasta            = params.fasta            ? file(params.fasta)            : Channel.empty()
-    ch_gtf              = params.gtf              ? file(params.gtf)              : Channel.empty()
-    ch_transcript_fasta = params.transcript_fasta ? file(params.transcript_fasta) : Channel.empty()
+    // Genome files from params
+    ch_fasta            = params.fasta            ? Channel.value(file(params.fasta))            : Channel.empty()
+    ch_gtf              = params.gtf              ? Channel.value(file(params.gtf))              : Channel.empty()
+    ch_transcript_fasta = params.transcript_fasta ? Channel.value(file(params.transcript_fasta)) : Channel.empty()
+    ch_gene_bed         = params.gene_bed         ? Channel.value(file(params.gene_bed))         : Channel.empty()
 
-    // Build STAR index if not provided
+    // ── STAR index ───────────────────────────────────────────────────────────
     ch_star_index = Channel.empty()
-    if (params.aligner == 'star') {
+    if (params.entryPoint == 'fastq' && params.aligner == 'star') {
         if (params.star_index) {
             ch_star_index = Channel.value(file(params.star_index))
         } else {
             STAR_GENOMEGENERATE(ch_fasta, ch_gtf)
             ch_star_index = STAR_GENOMEGENERATE.out.index
-            ch_versions = ch_versions.mix(STAR_GENOMEGENERATE.out.versions)
+            ch_versions   = ch_versions.mix(STAR_GENOMEGENERATE.out.versions)
         }
     }
 
-    // Build HISAT2 index if not provided
-    ch_hisat2_index  = Channel.empty()
-    ch_splicesites   = Channel.empty()
-    if (params.aligner == 'hisat2') {
+    // ── HISAT2 index ─────────────────────────────────────────────────────────
+    ch_hisat2_index = Channel.empty()
+    ch_splicesites  = Channel.empty()
+    if (params.entryPoint == 'fastq' && params.aligner == 'hisat2') {
         if (params.hisat2_index) {
             ch_hisat2_index = Channel.value(file(params.hisat2_index))
         } else {
             HISAT2_EXTRACTSPLICESITES(ch_gtf)
-            ch_splicesites = HISAT2_EXTRACTSPLICESITES.out.txt
+            ch_splicesites  = HISAT2_EXTRACTSPLICESITES.out.txt
             HISAT2_BUILD(ch_fasta, ch_gtf, ch_splicesites)
             ch_hisat2_index = HISAT2_BUILD.out.index
-            ch_versions = ch_versions.mix(HISAT2_BUILD.out.versions)
+            ch_versions     = ch_versions.mix(HISAT2_BUILD.out.versions)
         }
     }
 
-    // Build Salmon index
+    // ── Salmon index ─────────────────────────────────────────────────────────
     ch_salmon_index = Channel.empty()
-    if (params.quantification_method == 'salmon' || params.quantification_method == 'both') {
+    if (params.quantification_method in ['salmon', 'both']) {
         if (params.salmon_index) {
             ch_salmon_index = Channel.value(file(params.salmon_index))
-        } else {
+        } else if (params.entryPoint == 'fastq') {
             SALMON_INDEX(ch_fasta, ch_transcript_fasta)
             ch_salmon_index = SALMON_INDEX.out.index
-            ch_versions = ch_versions.mix(SALMON_INDEX.out.versions)
+            ch_versions     = ch_versions.mix(SALMON_INDEX.out.versions)
         }
     }
 
@@ -65,9 +69,10 @@ workflow PREPARE_GENOME {
     fasta            = ch_fasta
     gtf              = ch_gtf
     transcript_fasta = ch_transcript_fasta
+    gene_bed         = ch_gene_bed
     star_index       = ch_star_index
     hisat2_index     = ch_hisat2_index
     splicesites      = ch_splicesites
     salmon_index     = ch_salmon_index
-    versions         = ch_versions
+    versions         = ch_versions      // always emits, even if empty
 }

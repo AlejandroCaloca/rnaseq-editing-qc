@@ -39,3 +39,6 @@ slurm-*.out
 # Editor
 .vscode/
 *.swp
+results_test/
+results/
+work/

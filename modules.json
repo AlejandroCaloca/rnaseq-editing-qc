@@ -1,0 +1,97 @@
+{
+  "name": "rnaseq-editing-qc",
+  "homePage": "https://github.com/your-org/rnaseq-editing-qc",
+  "repos": {
+    "https://github.com/nf-core/modules.git": {
+      "modules": {
+        "nf-core": {
+          "fastqc": {
+            "branch": "master",
+            "git_sha": "3009f27c4e4b6e99da4eeebe82799e13924a4a1f",
+            "installed_by": ["modules"]
+          },
+          "hisat2/align": {
+            "branch": "master",
+            "git_sha": "d37912c9640323dfc3cd970cd110fe5946263be8",
+            "installed_by": ["modules"]
+          },
+          "hisat2/build": {
+            "branch": "master",
+            "git_sha": "66391ca86ea6a081d288afe6a93d242fefcd8c2c",
+            "installed_by": ["modules"]
+          },
+          "hisat2/extractsplicesites": {
+            "branch": "master",
+            "git_sha": "004e773fc35ebd24063ca4cbef057c94a24208aa",
+            "installed_by": ["modules"]
+          },
+          "multiqc": {
+            "branch": "master",
+            "git_sha": "575e1a4b51a9bad7a8cd1316a88fb85684ef7c7b",
+            "installed_by": ["modules"]
+          },
+          "rseqc/inferexperiment": {
+            "branch": "master",
+            "git_sha": "0145202ae8a9f39a4e7c533f667c38989af799b2",
+            "installed_by": ["modules"]
+          },
+          "rseqc/readdistribution": {
+            "branch": "master",
+            "git_sha": "eed5d14302a6c9070dcc25feeab707a27a4b3254",
+            "installed_by": ["modules"]
+          },
+          "salmon/index": {
+            "branch": "master",
+            "git_sha": "196cde9b19d49324c5cf10977959f5db856ebbdd",
+            "installed_by": ["modules"]
+          },
+          "salmon/quant": {
+            "branch": "master",
+            "git_sha": "9ebc300e05af07c770b86ff089581a2d41346c8b",
+            "installed_by": ["modules"]
+          },
+          "samtools/flagstat": {
+            "branch": "master",
+            "git_sha": "1d2fbdcbca677bbe8da0f9d0d2bb7c02f2cab1c9",
+            "installed_by": ["modules"]
+          },
+          "samtools/idxstats": {
+            "branch": "master",
+            "git_sha": "1d2fbdcbca677bbe8da0f9d0d2bb7c02f2cab1c9",
+            "installed_by": ["modules"]
+          },
+          "samtools/index": {
+            "branch": "master",
+            "git_sha": "1d2fbdcbca677bbe8da0f9d0d2bb7c02f2cab1c9",
+            "installed_by": ["modules"]
+          },
+          "samtools/sort": {
+            "branch": "master",
+            "git_sha": "5cb9a8694da0a0e550921636bb60bc8c56445fd7",
+            "installed_by": ["modules"]
+          },
+          "samtools/stats": {
+            "branch": "master",
+            "git_sha": "fe93fde0845f907fc91ad7cc7d797930408824df",
+            "installed_by": ["modules"]
+          },
+          "star/align": {
+            "branch": "master",
+            "git_sha": "d6419d592de78e193625b209c1d0a5cc09206df3",
+            "installed_by": ["modules"]
+          },
+          "star/genomegenerate": {
+            "branch": "master",
+            "git_sha": "481efe07277c76e23738b4be0724ba7d99653d7e",
+            "installed_by": ["modules"]
+          },
+          "trimmomatic": {
+            "branch": "master",
+            "git_sha": "af527937bdb4b3cc32d9afef6db0917c241c9488",
+            "installed_by": ["modules"]
+          }
+        }
+      }
+    }
+  }
+}

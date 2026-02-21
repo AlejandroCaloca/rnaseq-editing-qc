@@ -22,7 +22,7 @@ if (params.help) {
 USAGE:
     nextflow run main.nf -profile <docker|singularity> --input <samplesheet.csv> [options]
 
-ENTRY POINTS  (--entry_point):
+ENTRY POINTS  (--entryPoint):
     fastq          Start from raw FASTQ files  [DEFAULT]
                    Input columns: sample, fastq_1, fastq_2, condition, replicate
                    Steps: FastQC → Trimmomatic → STAR/HISAT2 → Quantification → DESeq2
@@ -40,12 +40,12 @@ ENTRY POINTS  (--entry_point):
                    Steps: Plots + HTML report only
 
 MANDATORY ARGS:
-    --input        Path to samplesheet CSV (format depends on --entry_point)
+    --input        Path to samplesheet CSV (format depends on --entryPoint)
     --genome       iGenomes key (e.g. GRCh38) OR provide --fasta + --gtf
     --outdir       Output directory [default: ./results]
 
 COMMON OPTIONS:
-    --entry_point       fastq | bam | counts | deseq2  [default: fastq]
+    --entryPoint       fastq | bam | counts | deseq2  [default: fastq]
     --ko_gene           Gene knocked out [default: IGF2BP3]
     --ko_condition      KO condition label in samplesheet [default: I3KO]
     --control_condition Control label [default: NT]
@@ -57,27 +57,27 @@ COMMON OPTIONS:
 EXAMPLES:
     # Run from BAM files (most common current use case):
     nextflow run main.nf -profile docker \\
-        --entry_point bam \\
+        --entryPoint bam \\
         --input bam_samplesheet.csv \\
         --genome GRCh38 \\
         --outdir ./results
 
     # Run from raw FASTQs (full pipeline):
     nextflow run main.nf -profile docker \\
-        --entry_point fastq \\
+        --entryPoint fastq \\
         --input fastq_samplesheet.csv \\
         --genome GRCh38 \\
         --outdir ./results
 
     # Re-run DE analysis from existing count files:
     nextflow run main.nf -profile docker \\
-        --entry_point counts \\
+        --entryPoint counts \\
         --input counts_samplesheet.csv \\
         --outdir ./results_rerun
 
     # Re-render plots/report only from saved DESeq2 RDS:
     nextflow run main.nf -profile docker \\
-        --entry_point deseq2 \\
+        --entryPoint deseq2 \\
         --deseq2_rds ./results/deseq2/deseq2_object.rds \\
         --input samplesheet.csv \\
         --outdir ./results_replot
@@ -89,16 +89,16 @@ EXAMPLES:
 
 // ── Validate entry point ──────────────────────────────────────────────────────
 def valid_entry_points = ['fastq', 'bam', 'counts', 'deseq2']
-if (!valid_entry_points.contains(params.entry_point)) {
-    exit 1, "ERROR: Invalid --entry_point '${params.entry_point}'.\n" +
-             "       Valid options: ${valid_entry_points.join(', ')}\n" +
+if (!valid_entry_points.contains(params.entryPoint)) {
+    exit 1, "ERROR: Invalid --entryPoint '${params.entryPoint}'.\n" +
+             "       Valid options: ${valid_entryPoints.join(', ')}\n" +
              "       Run with --help for usage examples."
 }
 
 // ── Validate inputs per entry point ──────────────────────────────────────────
-if (params.entry_point == 'deseq2') {
+if (params.entryPoint == 'deseq2') {
     if (!params.deseq2_rds) {
-        exit 1, "ERROR: --entry_point deseq2 requires --deseq2_rds /path/to/dds.rds"
+        exit 1, "ERROR: --entryPoint deseq2 requires --deseq2_rds /path/to/dds.rds"
     }
 } else {
     if (!params.input) {
@@ -106,8 +106,12 @@ if (params.entry_point == 'deseq2') {
     }
 }
 
-if (params.entry_point in ['fastq', 'bam'] && !params.genome && !params.fasta) {
-    exit 1, "ERROR: --entry_point '${params.entry_point}' requires --genome or --fasta + --gtf"
+if (params.entryPoint == 'fastq' && !params.genome && !params.fasta) {
+    exit 1, "ERROR: --entryPoint '${params.entryPoint}' requires --genome or --fasta + --gtf"
+}
+
+if (params.entryPoint == 'bam' && !params.genome && !params.fasta &&!params.gtf) {
+    exit 1, "ERROR: --entryPoint '${params.entryPoint}' requires --genome or --gtf"
 }
 
 // ── Print run header ──────────────────────────────────────────────────────────
@@ -115,7 +119,7 @@ log.info """
 ========================================================================================
     R N A S E Q - E D I T I N G - Q C
 ========================================================================================
-    Entry point       : ${params.entry_point.toUpperCase()}
+    Entry point       : ${params.entryPoint.toUpperCase()}
     Input             : ${params.input ?: 'N/A (deseq2 RDS mode)'}
     Genome            : ${params.genome ?: params.fasta ?: 'N/A'}
     Output dir        : ${params.outdir}
@@ -141,7 +145,7 @@ include { PIPELINE_FROM_DESEQ2 } from './workflows/entry_deseq2'
 */
 
 workflow {
-    switch (params.entry_point) {
+    switch (params.entryPoint) {
         case 'fastq':
             PIPELINE_FROM_FASTQ()
             break
@@ -162,7 +166,7 @@ workflow.onComplete {
     log.info """
 ========================================================================================
     Pipeline ${status}
-    Entry point : ${params.entry_point.toUpperCase()}
+    Entry point : ${params.entryPoint.toUpperCase()}
     Results     : ${params.outdir}
     Duration    : ${workflow.duration}
 ========================================================================================
