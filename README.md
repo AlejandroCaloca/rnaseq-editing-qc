@@ -97,6 +97,14 @@ The pipeline supports **four entry points** so you can start from whichever data
 ## Quick Start
 
 ```bash
+
+# 0. Install Docker (required for -profile docker)
+# Ubuntu/Debian:
+sudo apt-get update
+sudo apt-get install -y docker.io
+sudo usermod -aG docker $USER
+# log out and log back in to apply group changes
+
 # 1. Install Nextflow (requires Java 11+)
 curl -s https://get.nextflow.io | bash
 
