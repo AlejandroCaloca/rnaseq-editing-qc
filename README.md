@@ -176,6 +176,17 @@ nextflow run main.nf \
     --outdir ./results
 ```
 
+### Basic Podman Command
+
+```bash
+nextflow run main.nf \
+    -profile podman\
+    --input /path/to/samplesheet.csv \
+    --genome GRCh38 \
+    --outdir ./results
+```
+
+
 ### Using a Custom Genome
 
 ```bash
@@ -365,6 +376,7 @@ results/
 |---------|-------------|
 | `docker` | Run with Docker containers (recommended for local) |
 | `singularity` | Run with Singularity (recommended for HPC) |
+| `podman` | Run with Podman containers (HPC-friendly, rootles) |
 | `slurm` | Submit jobs via SLURM scheduler |
 | `test` | Run with minimal test data to validate installation |
 | `test_full` | Full-scale test run |
