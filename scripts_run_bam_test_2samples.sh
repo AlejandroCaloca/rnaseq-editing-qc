@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # -------- CONFIG --------
-BAM_EXP="path/to/experimental.bam"
-BAM_CTRL="path/to/control.bam"
+BAM_EXP="path/to/experimental.bam"  # <-- UPDATE THIS PATH
+BAM_CTRL="path/to/control.bam"  # <-- UPDATE THIS PATH
 GTF="gencode.v49.primary_assembly.annotation.gtf"
 OUTDIR="./results_test_2samples"
 SAMPLE_CSV="assets/samplesheet_bam_test_2samples.csv"
