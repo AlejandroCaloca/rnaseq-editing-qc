@@ -3,7 +3,8 @@ process SAMTOOLS_IDXSTATS {
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
-    container "https://depot.galaxyproject.org/singularity/samtools:1.22.1--h96c455f_0"
+    container "biocontainers/samtools:1.20--h50ea8bc_1"
+    //container "https://depot.galaxyproject.org/singularity/samtools:1.22.1--h96c455f_0"
 
     input:
     tuple val(meta), path(bam), path(bai)
