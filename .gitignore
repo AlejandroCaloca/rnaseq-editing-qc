@@ -4,6 +4,7 @@ work/
 # Results
 results/
 test_results/
+test_results6/
 
 # Nextflow hidden dirs
 .nextflow/
@@ -13,7 +14,7 @@ test_results/
 *.fastq.gz
 *.fq.gz
 # *.bam
-*.bai
+# *.bai
 *.fa
 *.fasta
 # *.gtf
