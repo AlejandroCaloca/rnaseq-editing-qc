@@ -44,7 +44,10 @@ workflow PIPELINE_FROM_BAM {
     }
 
     // Reshape for HTSeq: drop bai → [ meta, bam ]
-    ch_bam = ch_bam_input.map { meta, bam, bai -> [ meta, bam ] }
+    ch_bam_with_bai = ch_bam_input
+    [ meta, bam, bai ]
+    ch_bam_no_bai = ch_bam_input.map { meta, bam, bai -> [ meta, bam ] }
+   // ch_bam = ch_bam_input.map { meta, bam, bai -> [ meta, bam ] }
 
     //
     // MODULE: Quantification
@@ -71,7 +74,9 @@ workflow PIPELINE_FROM_BAM {
         ch_bam_namesorted = SAMTOOLS_SORT.out.bam.map { meta, bam_sorted -> [ meta, bam_sorted ] }
 
         // 3) Run HTSeq-count
-        HTSEQ_COUNT(ch_bam, PREPARE_GENOME.out.gtf)
+        HTSEQ_COUNT(ch_bam_with_bai, Channel.value(file(params.gtf)))
+
+        // HTSEQ_COUNT(ch_bam, PREPARE_GENOME.out.gtf)
         ch_counts   = HTSEQ_COUNT.out.counts
     }
 

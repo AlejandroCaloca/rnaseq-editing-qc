@@ -14,7 +14,7 @@ process HTSEQ_COUNT {
       'quay.io/biocontainers/htseq:2.0.2--py310ha14a713_0' }"
 
     input:
-    tuple val(meta), path(bam)
+    tuple val(meta), path(bam), path(bai)
     path gtf
 
     output:
