@@ -11,7 +11,7 @@ nextflow.enable.dsl = 2
 include { INPUT_CHECK_BAM   } from '../subworkflows/local/input_check_bam'
 include { PREPARE_GENOME    } from '../subworkflows/local/prepare_genome'
 include { BAM_QC            } from '../subworkflows/local/bam_qc'
-include { SAMTOOLS_SORT     } from '../modules/local/samtools_sort/main'
+include { SAMTOOLS_SORT     } from '../modules/nf-core/samtools/sort/main'
 include { HTSEQ_COUNT       } from '../modules/local/htseq_count/main'
 include { SALMON_QUANT      } from '../modules/nf-core/salmon/quant/main'
 include { KO_VERIFICATION   } from '../modules/local/ko_verification/main'
