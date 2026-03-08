@@ -12,7 +12,7 @@ process GENERATE_REPORT {
     conda "conda-forge::r-base=4.3.0 conda-forge::r-rmarkdown conda-forge::r-knitr conda-forge::r-kableextra conda-forge::r-dt conda-forge::r-ggplot2"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/bioconductor-deseq2:1.40.0--r43hf17093f_0' :
-        'biocontainers/bioconductor-deseq2:1.40.0--r43hf17093f_0' }"
+        'quay.io/biocontainers/bioconductor-deseq2:1.40.0--r43hf17093f_0' }"
 
     input:
     path results_all

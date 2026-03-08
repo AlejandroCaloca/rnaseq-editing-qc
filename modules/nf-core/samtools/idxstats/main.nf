@@ -3,9 +3,9 @@ process SAMTOOLS_IDXSTATS {
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
-    container "quay.io/biocontainers/samtools:1.15--h3843a85_0"
-    //container "biocontainers/samtools:1.20--h50ea8bc_1"
-    //container "https://depot.galaxyproject.org/singularity/samtools:1.22.1--h96c455f_0"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/samtools:1.22.1--h96c455f_0' :
+        'quay.io/biocontainers/samtools:1.22.1--h96c455f_0' }"
 
     input:
     tuple val(meta), path(bam), path(bai)

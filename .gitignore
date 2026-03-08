@@ -5,6 +5,7 @@ work/
 results/
 test_results/
 test_results6/
+results_test6/
 
 # Nextflow hidden dirs
 .nextflow/
