@@ -56,7 +56,7 @@ workflow PIPELINE_FROM_BAM {
     if (params.quantification_method in ['htseq', 'both']) {
         // 1) Name-sort BAMS for HTseq --- HTSeq 2.0.2 can handle unsorted BAMs, but name-sorting is still recommended for better performance
         
-        ch_bam_for_htseq = ch_bam
+        ch_bam_for_htseq = ch_bam_no_bai  // [meta, bam] for SAMTOOLS_SORT input
 
          // dummy optional inputs required by SAMTOOLS_SORT signature
          ch_no_fasta = ch_bam_for_htseq.map { meta,bam -> [meta, [null]] }   // tuple(meta2, fasta) with empty path
