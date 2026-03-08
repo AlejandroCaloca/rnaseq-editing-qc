@@ -52,6 +52,17 @@ workflow PIPELINE_FROM_BAM {
     ch_counts = Channel.empty()
 
     if (params.quantification_method in ['htseq', 'both']) {
+        // 1) Name-sort BAMS for HTseq --- HTSeq 2.0.2 can handle unsorted BAMs, but name-sorting is still recommended for better performance
+        SAMTOOLS_SORT(
+            ch_bam,             // tuple [ meta, bam ]
+            channel.empty(),    // no fasta needed for bam output
+            null,                // no gtf needed for bam output
+        )
+
+        // 2) Map SAMTOOLS_SORT output to HTSEQ_COUNT input: [ meta, namesorted_bam ]
+        ch_bam = SAMTOOLS_SORT.out.bam.map { meta, namesorted_bam -> [ meta, namesorted_bam ] }
+
+        // 3) Run HTSeq-count
         HTSEQ_COUNT(ch_bam, PREPARE_GENOME.out.gtf)
         ch_counts   = HTSEQ_COUNT.out.counts
     }

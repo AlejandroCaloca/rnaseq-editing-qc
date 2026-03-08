@@ -34,7 +34,7 @@ process HTSEQ_COUNT {
         --mode=${mode} \\
         --additional-attr=gene_name \\
         --counts_output=${prefix}.counts.txt \\
-        ${prefix}.namesorted.bam \\
+        ${bam} \\
         ${gtf}
 
     cat <<-END_VERSIONS > versions.yml
