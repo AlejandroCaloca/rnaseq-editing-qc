@@ -44,9 +44,8 @@ workflow PIPELINE_FROM_BAM {
     }
 
     // Reshape for HTSeq: drop bai → [ meta, bam ]
-    ch_bam_with_bai = ch_bam_input
-    [ meta, bam, bai ]
-    ch_bam_no_bai = ch_bam_input.map { meta, bam, bai -> [ meta, bam ] }
+    ch_bam_with_bai = ch_bam_input                                  // [meta,bam,bai]
+    ch_bam_no_bai   = ch_bam_input.map { meta, bam, bai -> [meta,bam] }  // for SAMTOOLS_SORT
    // ch_bam = ch_bam_input.map { meta, bam, bai -> [ meta, bam ] }
 
     //
