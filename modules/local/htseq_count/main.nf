@@ -8,7 +8,7 @@ process HTSEQ_COUNT {
     tag "$meta.id"
     label 'process_medium'
 
-    conda "bioconda::htseq=2.0.2 bioconda::samtools=1.15"
+    conda "bioconda::htseq=2.0.2"
       container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?    
       'https://depot.galaxyproject.org/singularity/htseq:2.0.2--py310ha14a713_0' :
       'quay.io/biocontainers/htseq:2.0.2--py310ha14a713_0' }"
@@ -26,9 +26,7 @@ process HTSEQ_COUNT {
     def stranded = params.htseq_stranded ?: 'reverse'
     def mode = params.htseq_count_mode ?: 'union'
     """
-    # Sort BAM by name for HTSeq
-    samtools sort -n -@ ${task.cpus} ${bam} -o ${prefix}.namesorted.bam
-
+    
     # Run HTSeq-count
     htseq-count \\
         --format=bam \\
@@ -42,7 +40,6 @@ process HTSEQ_COUNT {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         htseq: \$(python -c "import HTSeq; print(HTSeq.__version__)")
-        samtools: \$(samtools --version | head -n 1 | sed 's/samtools //')
     END_VERSIONS
     """
 }
