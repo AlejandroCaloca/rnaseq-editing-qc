@@ -9,10 +9,10 @@ process KO_VERIFICATION {
     label 'process_low'
     publishDir "${params.outdir}/ko_verification", mode: params.publish_dir_mode
 
-    conda "conda-forge::r-base=4.3.0 bioconda::bioconductor-deseq2=1.40.0 conda-forge::r-ggplot2=3.4.2"
+   // conda "conda-forge::r-base=4.3.0 bioconda::bioconductor-deseq2=1.40.0 conda-forge::r-ggplot2=3.4.2"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/bioconductor-deseq2:1.40.0--r43hf17093f_0' :
-        'quay.io/biocontainers/bioconductor-deseq2:1.40.0--r43hf17093f_0' }"
+        'docker://bioconductor/bioconductor_docker:RELEASE_3_18' :
+        'bioconductor/bioconductor_docker:RELEASE_3_18' }"
 
     input:
     path count_files
@@ -135,7 +135,7 @@ process KO_VERIFICATION {
     cat("KO mean count:  ", ko_mean, "\\n")
     cat("NT mean count:  ", nt_mean, "\\n")
     cat("KO efficiency:  ", round(ko_efficiency * 100, 1), "%\\n")
-    cat("Threshold:       ${threshold}%\\n")
+    cat("Threshold:      ", round(${threshold} * 100, 1), "%\\n")
     cat("QC status:      ", ifelse(passed, "PASSED", "FAILED"), "\\n")
     cat("========================================\\n\\n")
     
