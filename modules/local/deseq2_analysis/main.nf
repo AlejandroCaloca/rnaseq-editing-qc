@@ -35,7 +35,7 @@ process DESEQ2_ANALYSIS {
 
     script:
     """
-    Rscript << 'EOF'
+    Rscript - <<'EOF'
 
     library(DESeq2)
     library(ggplot2)
