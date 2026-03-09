@@ -11,8 +11,8 @@ process KO_VERIFICATION {
 
    // conda "conda-forge::r-base=4.3.0 bioconda::bioconductor-deseq2=1.40.0 conda-forge::r-ggplot2=3.4.2"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://bioconductor/bioconductor_docker:RELEASE_3_18' :
-        'bioconductor/bioconductor_docker:RELEASE_3_18' }"
+        'docker://rocker/tidyverse:4.3.1' :
+        'rocker/tidyverse:4.3.1' }"
 
     input:
     path count_files
