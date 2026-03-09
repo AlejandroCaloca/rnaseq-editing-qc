@@ -25,18 +25,18 @@ process HTSEQ_COUNT {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def stranded = params.htseq_stranded ?: 'reverse'
     def mode = params.htseq_count_mode ?: 'union'
+
     """
-    
     # Run HTSeq-count
     htseq-count \\
         --format=bam \\
         --stranded=${stranded} \\
         --mode=${mode} \\
         --additional-attr=gene_name \\
-        --counts_output=${prefix}.counts.txt \\
         ${bam} \\
-        ${gtf}
-
+        ${gtf} \\
+        > ${prefix}.counts.txt
+        
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         htseq: \$(python -c "import HTSeq; print(HTSeq.__version__)")
