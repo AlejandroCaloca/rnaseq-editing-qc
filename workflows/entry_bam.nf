@@ -28,7 +28,9 @@ workflow PIPELINE_FROM_BAM {
     // SUBWORKFLOW: Validate BAM samplesheet → [ meta, bam, bai ]
     //
     INPUT_CHECK_BAM(file(params.input))
-    ch_bam_input = INPUT_CHECK_BAM.out.bam
+    ch_bam_input = INPUT_CHECK_BAM.out.bam  // [ meta, bam, bai ]
+    ch_bam       = ch_bam_input.map { meta, bam, bai -> [meta, bam] } // for salmon path
+    ch_bam_with_bai = ch_bam_input.map { meta, bam, bai -> [meta, bam, bai] }
 
     //
     // SUBWORKFLOW: Prepare genome (GTF only for BAM entry point)
@@ -43,16 +45,22 @@ workflow PIPELINE_FROM_BAM {
         ch_multiqc_files = ch_multiqc_files.mix(BAM_QC.out.multiqc_files.ifEmpty([]))
     }
 
-    // Reshape for HTSeq: drop bai → [ meta, bam ]
-    ch_bam_with_bai = ch_bam_input                                  // [meta,bam,bai]
-    ch_bam_no_bai   = ch_bam_input.map { meta, bam, bai -> [meta,bam] }  // for SAMTOOLS_SORT
-   // ch_bam = ch_bam_input.map { meta, bam, bai -> [ meta, bam ] }
-
     //
     // MODULE: Quantification
     //
     ch_counts = Channel.empty()
 
+    if (params.quantification_method in ['htseq', 'both']) {
+        //bypass SAMTOOLS_SORT and directly feed unsorted BAMs to HTSEQ_COUNT --- HTSeq 2.0.2 can handle unsorted BAMs, but name-sorting is still recommended for better performance
+        def gtf_file = file(params.gtf)
+        if(!gtf_file.exists()) {
+            error "GTF file not found at ${params.gtf}"
+        }
+        HTSEQ_COUNT(ch-bam_with_bai, Channel.value(gtf_file))
+        ch_counts = HTSEQ_COUNT.out.counts
+    }
+
+/* Samools sort block. Removed for testing
     if (params.quantification_method in ['htseq', 'both']) {
         // 1) Name-sort BAMS for HTseq --- HTSeq 2.0.2 can handle unsorted BAMs, but name-sorting is still recommended for better performance
         
@@ -79,6 +87,7 @@ workflow PIPELINE_FROM_BAM {
         ch_counts   = HTSEQ_COUNT.out.counts
     }
 
+*/
     if (params.quantification_method in ['salmon', 'both']) {
         SALMON_QUANT(
             ch_bam,
