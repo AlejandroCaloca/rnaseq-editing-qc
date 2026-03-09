@@ -53,10 +53,11 @@ workflow PIPELINE_FROM_BAM {
     if (params.quantification_method in ['htseq', 'both']) {
         //bypass SAMTOOLS_SORT and directly feed unsorted BAMs to HTSEQ_COUNT --- HTSeq 2.0.2 can handle unsorted BAMs, but name-sorting is still recommended for better performance
         def gtf_file = file(params.gtf)
-        if(!gtf_file.exists()) {
-            error "GTF file not found at ${params.gtf}"
+        if (!gtf_file.exists()) {
+            error "GTF file not found: ${params.gtf}"
         }
-        HTSEQ_COUNT(ch-bam_with_bai, Channel.value(gtf_file))
+        ch_gtf_direct = Channel.value(gtf_file)
+        HTSEQ_COUNT(ch_bam_with_bai, ch_gtf_direct)
         ch_counts = HTSEQ_COUNT.out.counts
     }
 
