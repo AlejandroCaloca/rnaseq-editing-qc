@@ -15,9 +15,13 @@ process DESEQ2_ANALYSIS {
   //  container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
   //   'docker://rocker/tidyverse:4.3.1' : 'rocker/tidyverse:4.3.1' }"  
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://bioconductor/bioconductor_docker:RELEASE_3_18' :
-        'bioconductor/bioconductor_docker:RELEASE_3_18' }"
+   // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+   //     'docker://bioconductor/bioconductor_docker:RELEASE_3_18' :
+   //     'bioconductor/bioconductor_docker:RELEASE_3_18' }"
+    
+     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/bioconductor-deseq2:1.42.0--r43hdfd78af_0' :
+        'quay.io/biocontainers/bioconductor-deseq2:1.42.0--r43hdfd78af_0' }"
 
 
 
