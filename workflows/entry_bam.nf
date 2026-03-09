@@ -118,8 +118,11 @@ workflow PIPELINE_FROM_BAM {
     //
     // MODULE: DESeq2
     //
+    // Convert HTSEQ output tuples [meta, counts_file] -> counts_file paths only
+    ch_count_files = ch_counts.map { meta, counts_file -> counts_file }
+
     DESEQ2_ANALYSIS(
-        ch_counts.collect(),
+        ch_count_files.collect(),
         file(params.input),
         params.ko_condition,
         params.control_condition,

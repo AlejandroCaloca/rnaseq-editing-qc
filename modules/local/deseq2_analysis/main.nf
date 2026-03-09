@@ -12,7 +12,7 @@ process DESEQ2_ANALYSIS {
     conda "conda-forge::r-base=4.3.0 bioconda::bioconductor-deseq2=1.40.0 conda-forge::r-ggplot2=3.4.2 conda-forge::r-pheatmap conda-forge::r-ggrepel conda-forge::r-openxlsx"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/bioconductor-deseq2:1.40.0--r43hf17093f_0' :
-        'quay.iobiocontainers/bioconductor-deseq2:1.40.0--r43hf17093f_0' }"
+        'quay.io/biocontainers/bioconductor-deseq2:1.40.0--r43hf17093f_0' }"
 
     input:
     path count_files
