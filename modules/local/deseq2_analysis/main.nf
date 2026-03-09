@@ -9,8 +9,8 @@ process DESEQ2_ANALYSIS {
     label 'process_medium'
     publishDir "${params.outdir}/deseq2", mode: params.publish_dir_mode
 
- //   conda "conda-forge::r-base=4.3.1 bioconda::bioconductor-deseq2=1.40.2 conda-forge::r-ggplot2 conda-forge::r-pheatmap conda-forge::r-ggrepel conda-forge::r-openxlsx conda-forge::r-dplyr"
-  //      container null
+   conda "conda-forge::r-base=4.3.1 bioconda::bioconductor-deseq2=1.40.2 conda-forge::r-ggplot2 conda-forge::r-pheatmap conda-forge::r-ggrepel conda-forge::r-openxlsx conda-forge::r-dplyr"
+        container null
 
   //  container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
   //   'docker://rocker/tidyverse:4.3.1' : 'rocker/tidyverse:4.3.1' }"  
@@ -19,9 +19,9 @@ process DESEQ2_ANALYSIS {
    //     'docker://bioconductor/bioconductor_docker:RELEASE_3_18' :
    //     'bioconductor/bioconductor_docker:RELEASE_3_18' }"
     
-     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/bioconductor-deseq2:1.42.0--r43hdfd78af_0' :
-        'quay.io/biocontainers/bioconductor-deseq2:1.42.0--r43hdfd78af_0' }"
+    // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    //    'https://depot.galaxyproject.org/singularity/bioconductor-deseq2:1.42.0--r43hdfd78af_0' :
+    //    'quay.io/biocontainers/bioconductor-deseq2:1.42.0--r43hdfd78af_0' }"
 
 
 
