@@ -9,8 +9,10 @@ process DESEQ2_ANALYSIS {
     label 'process_medium'
     publishDir "${params.outdir}/deseq2", mode: params.publish_dir_mode
 
-   conda "conda-forge::r-base=4.3.1 bioconda::bioconductor-deseq2=1.40.2 conda-forge::r-ggplot2 conda-forge::r-pheatmap conda-forge::r-ggrepel conda-forge::r-openxlsx conda-forge::r-dplyr"
-        container null
+    container 'rocker/tidyverse:4.3.1'
+
+  // conda "conda-forge::r-base=4.3.1 bioconda::bioconductor-deseq2=1.40.2 conda-forge::r-ggplot2 conda-forge::r-pheatmap conda-forge::r-ggrepel conda-forge::r-openxlsx conda-forge::r-dplyr"
+  //      container null
 
   //  container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
   //   'docker://rocker/tidyverse:4.3.1' : 'rocker/tidyverse:4.3.1' }"  
@@ -47,12 +49,12 @@ process DESEQ2_ANALYSIS {
     """
     Rscript - <<'EOF'
 
-    library(DESeq2)
-    library(ggplot2)
-    library(ggrepel)
-    library(pheatmap)
-    library(openxlsx)
-    library(dplyr)
+    if (!requireNamespace("BiocManager", quietly=TRUE)) install.packages("BiocManager", repos="https://cloud.r-project.org")
+    if (!requireNamespace("DESeq2", quietly=TRUE)) BiocManager::install("DESeq2", ask=FALSE, update=FALSE)
+    req <- c("ggplot2","ggrepel","pheatmap","openxlsx","dplyr")
+    for (p in req) if (!requireNamespace(p, quietly=TRUE)) install.packages(p, repos="https://cloud.r-project.org")
+
+    library(DESeq2); library(ggplot2); library(ggrepel); library(pheatmap); library(openxlsx); library(dplyr)
 
     dir.create("plots", showWarnings = FALSE)
 
