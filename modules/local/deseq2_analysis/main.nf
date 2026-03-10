@@ -9,9 +9,26 @@ process DESEQ2_ANALYSIS {
     label 'process_medium'
     publishDir "${params.outdir}/deseq2", mode: params.publish_dir_mode
 
-    conda "conda-forge::r-base=4.3.1 bioconda::bioconductor-deseq2=1.40.2 conda-forge::r-ggplot2 conda-forge::r-pheatmap conda-forge::r-ggrepel conda-forge::r-openxlsx conda-forge::r-dplyr"
-        container null
-        
+      container 'rnaseq-deseq2:4.5.0'
+
+ //   container 'rocker/tidyverse:4.3.1'
+
+  // conda "conda-forge::r-base=4.3.1 bioconda::bioconductor-deseq2=1.40.2 conda-forge::r-ggplot2 conda-forge::r-pheatmap conda-forge::r-ggrepel conda-forge::r-openxlsx conda-forge::r-dplyr"
+  //      container null
+
+  //  container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+  //   'docker://rocker/tidyverse:4.3.1' : 'rocker/tidyverse:4.3.1' }"  
+
+   // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+   //     'docker://bioconductor/bioconductor_docker:RELEASE_3_18' :
+   //     'bioconductor/bioconductor_docker:RELEASE_3_18' }"
+    
+    // container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    //    'https://depot.galaxyproject.org/singularity/bioconductor-deseq2:1.42.0--r43hdfd78af_0' :
+    //    'quay.io/biocontainers/bioconductor-deseq2:1.42.0--r43hdfd78af_0' }"
+
+
+
     input:
     path count_files
     path samplesheet
@@ -32,8 +49,7 @@ process DESEQ2_ANALYSIS {
 
     script:
     """
-    #!/usr/bin/env Rscript
-
+    Rscript - <<'EOF'
     library(DESeq2)
     library(ggplot2)
     library(ggrepel)
@@ -41,6 +57,7 @@ process DESEQ2_ANALYSIS {
     library(openxlsx)
     library(dplyr)
 
+    # Set working directory to where the count files are located
     dir.create("plots", showWarnings = FALSE)
 
     # ---------------------------------------------------------------------------------
@@ -126,7 +143,12 @@ process DESEQ2_ANALYSIS {
     # ---------------------------------------------------------------------------------
     # 5. PCA Plot
     # ---------------------------------------------------------------------------------
-    vsd <- vst(dds, blind = FALSE)
+
+    if (nrow(dds) < 30) {
+        vsd <- varianceStabilizingTransformation(dds, blind = FALSE)
+        } else {
+        vsd <- vst(dds, blind = FALSE)
+    }
     
     pca_data <- plotPCA(vsd, intgroup = "condition", returnData = TRUE)
     pct_var  <- round(100 * attr(pca_data, "percentVar"), 1)
@@ -278,5 +300,8 @@ process DESEQ2_ANALYSIS {
           paste0('        bioconductor-deseq2: "', packageVersion("DESeq2"), '"')),
         "versions.yml"
     )
+
+    EOF
+    
     """
 }

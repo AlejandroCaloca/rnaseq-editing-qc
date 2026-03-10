@@ -1,0 +1,6 @@
+
+FROM rocker/tidyverse:4.5.0
+
+RUN R -e "install.packages('BiocManager', repos='https://cloud.r-project.org')" && \
+    R -e "BiocManager::install(c('DESeq2'), ask=FALSE, update=FALSE)" && \
+    R -e "install.packages(c('ggrepel','pheatmap','openxlsx','dplyr'), repos='https://cloud.r-project.org')"
