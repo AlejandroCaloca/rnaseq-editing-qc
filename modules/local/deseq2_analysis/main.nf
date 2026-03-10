@@ -9,7 +9,7 @@ process DESEQ2_ANALYSIS {
     label 'process_medium'
     publishDir "${params.outdir}/deseq2", mode: params.publish_dir_mode
 
-      container 'rnaseq-deseq2:4.3.1'
+      container 'rnaseq-deseq2:4.5.0'
 
  //   container 'rocker/tidyverse:4.3.1'
 
