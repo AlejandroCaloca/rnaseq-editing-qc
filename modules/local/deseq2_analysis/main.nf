@@ -143,7 +143,12 @@ process DESEQ2_ANALYSIS {
     # ---------------------------------------------------------------------------------
     # 5. PCA Plot
     # ---------------------------------------------------------------------------------
-    vsd <- vst(dds, blind = FALSE)
+
+    if (nrow(dds) < 30) {
+        vsd <- varianceStabilizingTransformation(dds, blind = FALSE)
+        } else {
+        vsd <- vst(dds, blind = FALSE)
+    }
     
     pca_data <- plotPCA(vsd, intgroup = "condition", returnData = TRUE)
     pct_var  <- round(100 * attr(pca_data, "percentVar"), 1)
